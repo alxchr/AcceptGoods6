@@ -1,0 +1,52 @@
+<resources>
+    <string name="app_name">AcceptGoods6</string>
+    <string name="box">Box</string>
+    <string name="cell">Cell</string>
+    <string name="goods">Goods</string>
+    <string name="store">Store</string>
+    <string name="storeman">Storeman</string>
+    <string name="finish">Finish</string>
+    <string name="storeman_number_tts">Enter storeman number, press Enter</string>
+    <string name="wrong_cell">Wrong cell number</string>
+    <string name="wrong_goods">Wrong goods code</string>
+    <string name="store_choice">Chose store</string>
+    <string name="sd_card_error">SD card write error</string>
+    <string name="no_sd_card">Insert SD card</string>
+    <string name="start1">Start work</string>
+    <string name="dct_num">DCT number</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="enter_again">Enter again</string>
+    <string name="current_position">Current position</string>
+    <string name="refresh">Refresh</string>
+    <string name="settings">Store</string>
+    <string name="clear_data">Clear data</string>
+    <string name="device_id">Device ID</string>
+    <string name="wrong_box">Wrong box number</string>
+    <string name="qnt">Quantity</string>
+    <string name="confirm_exit">Confirm exit</string>
+    <string name="scan_box_tts">Scan box</string>
+    <string name="empty_box_tts">Box is empty</string>
+    <string name="remain_label">Remain</string>
+    <string name="wrong_qnt">Wrong goods quantity</string>
+    <string name="placed_goods">Placed goods</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment" translatable="false">Hello blank fragment</string>
+    <string name="close">Close</string>
+    <string name="lost_goods">Lost goods</string>
+    <string name="confirm_lost">Confirm lost goods</string>
+    <string name="goods_loss">Goods loss</string>
+    <string name="change_cell">Change cell</string>
+    <string name="confirm_cell_change">Confirm cell change</string>
+    <string name="lost_cell_name" translatable="false">77077</string>
+    <string name="excessive_goods_label">Enter article or scan goods barcode</string>
+    <string name="excessive_goods_confirm">Confirm excessive goods</string>
+    <string name="excessive_goods">Excessive goods</string>
+    <string name="goods_choice">Chose goods</string>
+    <string name="cell2">Cell</string>
+    <string name="check_info">Check input info</string>
+    <string name="edit_data">Edit data?</string>
+    <string name="clear">Clear</string>
+    <string name="upload">Upload data</string>
+    <string name="clear_msg">Clear all data</string>
+</resources>

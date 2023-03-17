@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/goodsLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.main.GoodsFragment">
+
+
+    <TextView
+        android:id="@+id/tv_article"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_goods"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_article" />
+
+    <TextView
+        android:id="@+id/tv_brand"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_goods" />
+    <TextView
+        app:layout_constraintTop_toBottomOf="@+id/tv_brand"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:id="@+id/tv_remain_label"
+        android:text="@string/remain_label"/>
+    <TextView
+        app:layout_constraintTop_toBottomOf="@+id/tv_brand"
+        app:layout_constraintStart_toEndOf="@id/tv_remain_label"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:id="@+id/tv_remain"/>
+    <TextView
+        android:id="@+id/tv_qnt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:text="@string/qnt"
+        app:layout_constraintEnd_toStartOf="@id/et_qnt"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_remain_label" />
+
+    <EditText
+        android:id="@+id/et_qnt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:inputType="number"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tv_qnt"
+        app:layout_constraintTop_toBottomOf="@+id/tv_remain_label"
+        tools:ignore="SpeakableTextPresentCheck" />
+    <TextView
+        android:id="@+id/tv_cell_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:text="@string/cell"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/et_cell"
+        app:layout_constraintTop_toBottomOf="@+id/tv_qnt" />
+
+    <EditText
+        android:id="@+id/et_cell"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/tv_cell_label"
+        app:layout_constraintTop_toBottomOf="@+id/tv_qnt"
+        tools:ignore="SpeakableTextPresentCheck" />
+    <ProgressBar
+        app:layout_constraintTop_toBottomOf="@+id/et_cell"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/pb_wait"
+        android:visibility="gone"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.main.MainFragment">
+
+
+
+    <TextView
+        android:textSize="20sp"
+        android:id="@+id/tv_box_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/box"
+        app:layout_constraintBottom_toTopOf="@id/lv_task_list"
+        app:layout_constraintEnd_toStartOf="@id/et_box"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/et_box"
+        android:lines="1"
+        app:layout_constraintBottom_toTopOf="@id/lv_task_list"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/tv_box_label"
+        />
+    <ListView
+        app:layout_constraintTop_toBottomOf="@id/et_box"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/lv_task_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"/>
+    <ProgressBar
+        app:layout_constraintTop_toBottomOf="@id/et_box"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/pb_wait_box"/>
+    <!--
+    <Button
+        android:textSize="24sp"
+        app:layout_constraintTop_toBottomOf="@id/lv_task_list"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:id="@+id/bt_finish"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/finish"/>
+        -->
+</androidx.constraintlayout.widget.ConstraintLayout>

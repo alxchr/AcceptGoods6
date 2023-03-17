@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ui.main.ExcessiveGoodsFragment">
+    <TextView
+        android:textSize="20sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/excessive_goods_label"
+        android:id="@+id/tv_excessive_label"/>
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/et_excessive_goods_article"/>
+    <TextView
+        android:textSize="20sp"
+        android:layout_width="match_parent"
+        android:lines="4"
+        android:layout_height="wrap_content"
+        android:id="@+id/tv_excessive_goods_info"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="7">
+    <TextView
+        android:id="@+id/tv_qnt"
+        android:layout_width="0dp"
+        android:layout_weight="5"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:text="@string/qnt"
+        />
+
+    <EditText
+        android:id="@+id/et_qnt"
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:layout_height="wrap_content"
+        android:lines="2"
+        android:inputType="number"
+        android:textSize="24sp"
+
+        tools:ignore="SpeakableTextPresentCheck" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="7">
+    <TextView
+        android:id="@+id/tv_cell_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="5"
+        android:textSize="20sp"
+        android:lines="2"
+        android:text="@string/cell2"
+        />
+
+    <EditText
+        android:id="@+id/et_cell"
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:textSize="24sp"/>
+    </LinearLayout>
+    <TextView
+        android:textSize="20sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/excessive_goods_confirm"
+        android:id="@+id/tv_confirm_label"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:weightSum="2">
+        <Button
+            android:layout_width="0dp"
+            android:textSize="24sp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/yes"
+            android:id="@+id/bt_confirm"/>
+        <Button
+            android:layout_width="0dp"
+            android:textSize="24sp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/no"
+            android:id="@+id/bt_decline"/>
+    </LinearLayout>
+
+
+
+</LinearLayout>
