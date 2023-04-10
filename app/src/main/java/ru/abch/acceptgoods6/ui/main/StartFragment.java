@@ -57,7 +57,7 @@ public class StartFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_start, container, false);
         etStoreman = view.findViewById(R.id.et_storeman);
         tvStore = view.findViewById(R.id.tv_store);
-        if (App.getStoreIndex() > 0) tvStore.setText(((MainActivity)getActivity()).names[App.getStoreIndex()]);
+        if (App.warehouse != null) tvStore.setText(App.warehouse.descr.trim());
 //        btStart1 = view.findViewById(R.id.bt_start1);
 
         return view;
@@ -79,7 +79,7 @@ public class StartFragment extends Fragment {
                 }
                 if (storeMan > 0) {
                     App.setStoreMan(storeMan);
-                    ((MainActivity) getActivity()).gotoMainFragment();
+                    ((MainActivity) requireActivity()).gotoMainFragment();
                 }
             }
             return false;
@@ -100,5 +100,8 @@ public class StartFragment extends Fragment {
         });
 
  */
+    }
+    public void setStore() {
+        if(App.warehouse != null) tvStore.setText(App.getStoreName());
     }
 }

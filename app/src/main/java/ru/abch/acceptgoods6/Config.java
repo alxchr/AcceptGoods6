@@ -21,7 +21,8 @@ public class Config {
     public static final String dumpPath = "/accept5/dump/";
     public static final String dumpExcessivePath = "/move3/dump/";
     public static final String postExcessivePath = "/move3/goods/";
-    public static final String warehousesPath = "/move3/warehouses/";
+    public static final String warehousesPath = "/move3/warehouses2/";
+    public static final String packPath = "/accept5/pack/";
     public static final long timeShift = 946666800000L;
     public static final boolean tts = true;
     public static long toComttTime(long t) {

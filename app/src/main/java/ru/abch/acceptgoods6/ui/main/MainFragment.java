@@ -96,7 +96,7 @@ public class MainFragment extends Fragment {
                             prefix = Integer.parseInt(input.substring(0, input.indexOf(".")));
                             suffix = Integer.parseInt(input.substring(input.indexOf(".") + 1));
                             cellName = String.format("%02d",prefix) + String.format("%03d",suffix);
-                            result = App.storeCode[App.getStoreIndex()] + cellName + "000";
+                            result = App.warehouse.storeCode + cellName + "000";
                             int [] resDigit = new int[12];
                             for (int i = 0; i < 12; i++) {
                                 resDigit[i] = Integer.parseInt(result.substring(i, i+1));
@@ -119,6 +119,13 @@ public class MainFragment extends Fragment {
                                 etBox.setText("");
                                 MainActivity.say(getResources().getString(R.string.wrong_box));
                             }
+                        } if(!input.isEmpty()) {
+//                            Log.d(TAG,"Pallette num " + input);
+                            App.setCurrentPackNum(input);
+                            App.setPackMode(true);
+                            etBox.setText(input);
+                            etBox.setEnabled(false);
+                            ((MainActivity) requireActivity()).refreshData();
                         } else {
                             etBox.setText("");
                             MainActivity.say(getResources().getString(R.string.wrong_cell));
@@ -164,8 +171,11 @@ public class MainFragment extends Fragment {
         ArrayList<GoodsRow> list = MainActivity.mViewModel.getGoodsData().getValue();
         outBox = App.getCurrentBox();
         String savedBoxDescr = (App.getCurrentBox() == null)? "" : App.getCurrentBox().descr;
+        if(App.getPackMode() && !App.getCurrentPackNum().isEmpty()) {
+            savedBoxDescr = App.getCurrentPackNum();
+        }
         boxSaved = savedBoxDescr.length() > 0;
-
+//        etBox.setText(savedBoxDescr);
         if(!Database.getPlacedList().isEmpty() && Database.getTaskList().isEmpty()) {
             ((MainActivity) requireActivity()).showAdbPlaced();
         }
@@ -190,6 +200,9 @@ public class MainFragment extends Fragment {
             goodsList.observe(getViewLifecycleOwner(), goodsRows -> {
                 if(goodsRows.size() > 0) {
                     String sbd = (App.getCurrentBox() == null)? "" : App.getCurrentBox().descr;
+                    if(App.getPackMode() && !App.getCurrentPackNum().isEmpty()) {
+                        sbd = App.getCurrentPackNum();
+                    }
                     boxSaved = sbd.length() > 0;
                     etBox.setText(sbd);
                     etBox.setEnabled(false);
@@ -238,7 +251,7 @@ public class MainFragment extends Fragment {
                                             Database.getCellByName(Config.getCellName(res)) : null;
 
                                      */
-                                    String code = App.codeMap.get(App.getStoreId()) == null? "aa" : App.codeMap.get(App.getStoreId());
+                                    String code = App.warehouse == null? "aa" : App.warehouse.storeCode;
                                     assert code != null;
                                     outBox = res.startsWith(code) || res.startsWith("1900") && App.getStoreId().equals("    12SPR")?
                                             Database.getCellByName(Config.getCellName(res)) : null;
@@ -250,6 +263,7 @@ public class MainFragment extends Fragment {
                                         App.setCurrentBox(outBox);
                                         etBox.setText(outBox.descr);
                                         etBox.setEnabled(false);
+                                        App.setPackMode(false);             //process box
                                         ((MainActivity) requireActivity()).refreshData();
                                     }
                                     break;
@@ -265,6 +279,17 @@ public class MainFragment extends Fragment {
                                     break;
                                 default:
                                     break;
+                            }
+                        } else if(scannedCode.codeId.equals("b") && App.state == App.MAINCYCLE) {
+                            Log.d(TAG, "Pack label scanned " + scannedCode.data);
+                            if(scannedCode.data.startsWith("UI") && scannedCode.data.length() == 11) {
+                                String packId = scannedCode.data.substring(2).replaceAll("\\."," ");
+                                Log.d(TAG, "Pack id scanned " + packId);
+                                App.setPackMode(true);  //process pack
+                                App.setCurrentPackId(packId);
+                                ((MainActivity) requireActivity()).refreshData();
+                            } else {
+                                MainActivity.say(getResources().getString(R.string.wrong_box));
                             }
                         } else {
                             if (App.state == App.SELECTGOODS) {

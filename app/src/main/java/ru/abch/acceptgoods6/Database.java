@@ -21,7 +21,7 @@ import java.util.TimeZone;
 public class Database {
     private static  String TAG = "Database";
     private static final String DB_NAME = "goodsdb";
-    private static final int DB_VERSION = 12;
+    private static final int DB_VERSION = 15;
     private static final String DB_TABLE_BARCODES = "barcodes";
     private static final String DB_TABLE_GOODS = "goods";
     private static final String DB_TABLE_ALL_GOODS = "all_goods";
@@ -50,6 +50,9 @@ public class Database {
     private static final String COLUMN_OUTPUT_CELL_ID = "output_cell_id";
     private static final String COLUMN_ZONEIN = "zonein";
     private static final String COLUMN_ZONEIN_DESCR = "zonein_descr";
+    private static final String DB_TABLE_PACK = "pack";
+    private static final String COLUMN_PACK_QNT  = "pack_qnt";
+    private static final String COLUMN_MDOC  = "mdoc";
     private static final String DB_CREATE_BARCODES =
                     "create table " + DB_TABLE_BARCODES + "(" +
                     COLUMN_ID + " integer primary key autoincrement, " +
@@ -93,7 +96,8 @@ public class Database {
                     COLUMN_SENT + " integer, " +
                     COLUMN_STORE + " text not null, " +
                     COLUMN_BOX_ID + " text, " +
-                    COLUMN_EXCESSIVE + " integer " +
+                    COLUMN_EXCESSIVE + " integer, " +
+                    COLUMN_MDOC + " text " +
                     ");";
     private static final String DB_CREATE_CELLS =
             "create table " + DB_TABLE_CELLS + "(" +
@@ -105,6 +109,18 @@ public class Database {
                     COLUMN_CELL_DISTANCE + " integer, " +
                     COLUMN_ZONEIN + " text, " +
                     COLUMN_ZONEIN_DESCR + " text" +
+                    ");";
+    private static final String DB_CREATE_PACK =
+            "create table " + DB_TABLE_PACK + "(" +
+                    COLUMN_ID + " integer primary key autoincrement, " +
+                    COLUMN_MDOC + " text, " +
+                    COLUMN_QNT + " integer, " +
+                    COLUMN_PACK_QNT + " integer, " +
+                    COLUMN_GOODS_CODE + " text not null, " +
+                    COLUMN_GOODS_DESC + " text not null, " +
+                    COLUMN_GOODS_ARTICLE + " text, " +
+                    COLUMN_GOODS_BRAND + " text, " +
+                    COLUMN_CELL_ID + " text " +
                     ");";
     private final Context mCtx;
     private DBHelper mDBHelper;
@@ -151,6 +167,7 @@ public class Database {
             db.execSQL(DB_CREATE_PLACEDGOODS);
             db.execSQL(DB_CREATE_CELLS);
             db.execSQL(DB_CREATE_ALL_GOODS);
+            db.execSQL(DB_CREATE_PACK);
             Log.d(TAG, "onCreate");
         }
 
@@ -162,6 +179,7 @@ public class Database {
             String dropBarcodes = "drop table if exists " + DB_TABLE_BARCODES;
             String dropCells = "drop table if exists " + DB_TABLE_CELLS;
             String dropAllGoods = "drop table if exists " + DB_TABLE_ALL_GOODS;
+            String dropPack = "drop table if exists " + DB_TABLE_PACK;
             if (oldVersion == 1 && newVersion == 2) db.execSQL(DB_CREATE_BARCODES);
             if (newVersion > 2) {
                 db.execSQL(dropPlacedGoods);
@@ -169,11 +187,13 @@ public class Database {
                 db.execSQL(dropBarcodes);
                 db.execSQL(dropCells);
                 db.execSQL(dropAllGoods);
+                db.execSQL(dropPack);
                 db.execSQL(DB_CREATE_BARCODES);
                 db.execSQL(DB_CREATE_GOODS);
                 db.execSQL(DB_CREATE_PLACEDGOODS);
                 db.execSQL(DB_CREATE_CELLS);
                 db.execSQL(DB_CREATE_ALL_GOODS);
+                db.execSQL(DB_CREATE_PACK);
             }
         }
     }
@@ -194,7 +214,7 @@ public class Database {
         try {
             ret = mDB.insert(DB_TABLE_CELLS, null, cv);
         }  catch (SQLiteException ex) {
-            FL.e(TAG, Arrays.toString(ex.getStackTrace()));
+            FL.e(TAG, ex.getMessage());
         }
         return ret;
     }
@@ -239,6 +259,7 @@ public class Database {
     public static void clearData() {
         mDB.delete(DB_TABLE_BARCODES, null, null);
         mDB.delete(DB_TABLE_GOODS, null, null);
+        mDB.delete(DB_TABLE_PACK, null, null);
         purgeSentData(false);
         FL.d(TAG,"Clear tables");
     }
@@ -256,7 +277,7 @@ public class Database {
         try {
             ret = mDB.insert(DB_TABLE_BARCODES, null, cv);
         }  catch (SQLiteException ex) {
-            FL.e(TAG, Arrays.toString(ex.getStackTrace()));
+            FL.e(TAG, ex.getMessage());
         }
         return ret;
     }
@@ -275,7 +296,7 @@ public class Database {
         try {
             ret = mDB.insert(DB_TABLE_GOODS, null, cv);
         }  catch (SQLiteException ex) {
-            FL.e(TAG, Arrays.toString(ex.getStackTrace()));
+            FL.e(TAG, ex.getMessage());
         }
         return ret;
     }
@@ -347,7 +368,27 @@ public class Database {
         try {
             ret = mDB.insert(DB_TABLE_PLACEDGOODS, null, cv);
         }  catch (SQLiteException ex) {
-            FL.e(TAG, Arrays.toString(ex.getStackTrace()));
+            FL.e(TAG, ex.getMessage());
+        }
+        return ret;
+    }
+    public static long addPackGoods(int storeman, String goodsId, String barcode, int qnt, String cell, String datetime, String mdoc) {
+        long ret = 0;
+        ContentValues cv = new ContentValues();
+        cv.put(COLUMN_STOREMAN,storeman);
+        cv.put(COLUMN_GOODS_CODE,goodsId);
+        cv.put(COLUMN_BARCODE, barcode);
+        cv.put(COLUMN_QNT, qnt);
+        cv.put(COLUMN_INPUT_CELL, cell);
+        cv.put(COLUMN_MOVEGOODS_SCAN_TIME, datetime);
+        cv.put(COLUMN_STORE, App.getStoreId());
+        cv.put(COLUMN_SENT, 0);
+        cv.put(COLUMN_MDOC, mdoc);
+        cv.put(COLUMN_EXCESSIVE, 0);
+        try {
+            ret = mDB.insert(DB_TABLE_PLACEDGOODS, null, cv);
+        }  catch (SQLiteException ex) {
+            FL.e(TAG, ex.getMessage());
         }
         return ret;
     }
@@ -367,11 +408,30 @@ public class Database {
         try {
             ret = mDB.insert(DB_TABLE_PLACEDGOODS, null, cv);
         } catch (SQLiteException ex) {
-            FL.e(TAG, Arrays.toString(ex.getStackTrace()));
+            FL.e(TAG, ex.getMessage());
         }
         return ret;
     }
-
+    public static long addExcessivePackGoods(int storeman, String goodsId, String barcode, int qnt, String cell, String datetime, String mdoc) {
+        long ret = 0;
+        ContentValues cv = new ContentValues();
+        cv.put(COLUMN_STOREMAN, storeman);
+        cv.put(COLUMN_GOODS_CODE, goodsId);
+        cv.put(COLUMN_BARCODE, barcode);
+        cv.put(COLUMN_QNT, qnt);
+        cv.put(COLUMN_INPUT_CELL, cell);
+        cv.put(COLUMN_MOVEGOODS_SCAN_TIME, datetime);
+        cv.put(COLUMN_STORE, App.getStoreId());
+        cv.put(COLUMN_SENT, 0);
+        cv.put(COLUMN_MDOC, mdoc);
+        cv.put(COLUMN_EXCESSIVE, 1);
+        try {
+            ret = mDB.insert(DB_TABLE_PLACEDGOODS, null, cv);
+        }  catch (SQLiteException ex) {
+            FL.e(TAG, ex.getMessage());
+        }
+        return ret;
+    }
     static int addGoodsCount(){
         Cursor c = mDB.query(DB_TABLE_PLACEDGOODS, null, COLUMN_SENT + " =0", null, null, null, null);
         int ret = c.getCount();
@@ -566,7 +626,7 @@ public class Database {
         try {
             ret = mDB.insert(DB_TABLE_ALL_GOODS, null, cv);
         }  catch (SQLiteException ex) {
-            FL.e(TAG, Arrays.toString(ex.getStackTrace()));
+            FL.e(TAG, ex.getMessage());
         }
         return ret;
     }
@@ -635,6 +695,110 @@ public class Database {
                 c.moveToNext();
             }
             c.close();
+        }
+        return ret;
+    }
+    public static long addPack(String goodsCode, String desc, String mdoc, String article, int qnt, int packQnt, String brand, String cellId) {
+        long ret = 0;
+        ContentValues cv = new ContentValues();
+        cv.put(COLUMN_GOODS_CODE, goodsCode);
+        cv.put(COLUMN_GOODS_DESC, desc);
+        cv.put(COLUMN_MDOC, mdoc);
+        cv.put(COLUMN_GOODS_ARTICLE, article);
+        cv.put(COLUMN_QNT, qnt);
+        cv.put(COLUMN_PACK_QNT, packQnt);
+        cv.put(COLUMN_GOODS_BRAND, brand);
+        cv.put(COLUMN_CELL_ID, cellId);
+        try {
+            ret = mDB.insert(DB_TABLE_PACK, null, cv);
+        }  catch (SQLiteException ex) {
+            FL.e(TAG, ex.getMessage());
+        }
+        return ret;
+    }
+    public static ArrayList<GoodsRow> getPackList() {
+        ArrayList<GoodsRow> ret = new ArrayList<>();
+        Cursor c, c1, c2;
+        PackDetail packDetail;
+        PackDetail[] packDetails;
+        final String tablePack = DB_TABLE_PACK;
+        String rawQuery = "select distinct P." + COLUMN_GOODS_CODE +",P." + COLUMN_GOODS_DESC + ",P." +COLUMN_GOODS_ARTICLE + ",P." + COLUMN_GOODS_BRAND +
+                ",P." + COLUMN_CELL_ID +",C." + COLUMN_CELL_DESCR + " from " + tablePack + " as P left join " +
+                DB_TABLE_CELLS + " as C on P." + COLUMN_CELL_ID + "=C." + COLUMN_CELL_ID;
+        /*
+        c = mDB.query(tablePack, null, null, null,
+                null, null, null);
+ ",P." + COLUMN_QNT + ",P." + COLUMN_PACK_QNT +
+         */
+        c = mDB.rawQuery(rawQuery, null);
+        Log.d(TAG, tablePack + " size " + c.getCount());
+        while (c.moveToNext()) {
+            int qnt = 0;
+            c2 = mDB.query(tablePack, new String[] {COLUMN_ID, COLUMN_QNT, COLUMN_PACK_QNT, COLUMN_MDOC}, COLUMN_GOODS_CODE + "=?",
+                    new String[] {c.getString(0)}, null, null, null);
+            if(c2.getCount() > 0) {
+                packDetails = new PackDetail[c2.getCount()];
+                int i = 0;
+                while (c2.moveToNext()) {
+                    packDetail = new PackDetail();
+                    packDetail.id = c2.getInt(0);
+                    packDetail.qnt = c2.getInt(1);
+                    packDetail.packQnt = c2.getInt(2);
+                    packDetail.mdoc = c2.getString(3);
+                    packDetail.goods_code = c.getString(0);
+                    packDetails[i++] = packDetail;
+                    qnt += Math.min(c2.getInt(1), c.getInt(2));
+                }
+            } else {
+                packDetails = null;
+            }
+            c2.close();
+            c1 = mDB.query(DB_TABLE_PLACEDGOODS, new String[]{"SUM(" + COLUMN_QNT + ")"},
+                    COLUMN_GOODS_CODE + "=? and " + COLUMN_EXCESSIVE + "=0",
+                    new String[]{c.getString(4)}, null, null, null);
+
+            int q = (c1.moveToNext()) ? qnt - c1.getInt(0) : qnt;
+            c1.close();
+            if (q > 0) {
+                GoodsRow gr = new GoodsRow(c.getString(0), q, c.getString(1),
+                        c.getString(2), c.getString(3), c.getString(4), c.getString(5));
+                gr.packDetails = packDetails;
+                ret.add(gr);
+            }
+        }
+        c.close();
+        Log.d(TAG,"getPackList() size " + ret.size());
+        return ret;
+    }
+    public static GoodsRow getPackRowById(String goodsCode) {
+        GoodsRow ret = null;
+        Cursor c;
+        final String tablePack = DB_TABLE_PACK, tablePlaced = DB_TABLE_PLACEDGOODS;
+        String rawQuery = "select P." + COLUMN_GOODS_CODE +",P." + COLUMN_GOODS_DESC + ",P." + COLUMN_GOODS_ARTICLE + ",P." + COLUMN_GOODS_BRAND +
+                ",P." + COLUMN_MDOC +",PL." + COLUMN_MDOC + ", case when P." + COLUMN_QNT + ">P." + COLUMN_PACK_QNT + " then P." + COLUMN_PACK_QNT +
+                " else P." + COLUMN_QNT + " end -sum(ifnull(PL." + COLUMN_QNT + ",0)) from " + tablePack + " as P left join " +
+                tablePlaced + " as PL on P." + COLUMN_GOODS_CODE + "=PL." + COLUMN_GOODS_CODE + " and P." + COLUMN_MDOC + "=PL." + COLUMN_MDOC +
+                " group by P." + COLUMN_MDOC +
+                " having P." + COLUMN_GOODS_CODE + "=? and case when P." + COLUMN_QNT + ">P." + COLUMN_PACK_QNT + " then P." + COLUMN_PACK_QNT +
+                " else P." + COLUMN_QNT +  " end -sum(ifnull(PL." + COLUMN_QNT + ",0)) > 0";
+        c = mDB.rawQuery(rawQuery,new String[]{goodsCode});
+        while (c.moveToNext()) {
+            Log.d(TAG, c.getString(1) + " " + c.getString(2) + " " + c.getString(4) + " " + c.getString(5) +
+                    " " + c.getInt(6));
+        }
+        return ret;
+    }
+    public static GoodsRow getPackRow(String barcode) {
+        GoodsRow ret = null;
+        String goodsCode;
+        Cursor c = mDB.query(DB_TABLE_BARCODES, null,COLUMN_BARCODE + "=?", new String[]{barcode},
+                null, null, null, null );
+        if (c.moveToFirst()) {
+            goodsCode = c.getString(1);
+            Log.d(TAG, "Found " + goodsCode + " for " + barcode);
+            ret = getPackRowById(goodsCode);
+        } else {
+            Log.d(TAG, "No code found");
         }
         return ret;
     }

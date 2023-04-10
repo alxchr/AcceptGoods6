@@ -3,6 +3,7 @@ package ru.abch.acceptgoods6;
 public class GoodsRow {
     public String id, description, article, brand, cellId, cell;
     public int qnt, distance;
+    public PackDetail[] packDetails;
     GoodsRow(String id, int qnt, String description, String article, String brand, String cellId, String cell) {
         this.cell = cell;
         this.cellId = cellId;

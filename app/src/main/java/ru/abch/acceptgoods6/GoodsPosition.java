@@ -5,7 +5,7 @@ public class GoodsPosition {
     int qnt, total;
     long rowId;
     public boolean excessive;
-    public String cellId;
+    public String cellId, mdoc;
     GoodsPosition(String id, String barcode, String description, String cell, int qnt, String article, int total){
         this.barcode = barcode;
         this.description = description;

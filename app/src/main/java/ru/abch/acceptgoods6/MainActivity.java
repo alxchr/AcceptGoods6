@@ -142,10 +142,12 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     GetWSAllGoods getAllGoods;
     ExcessiveGoodsFragment egf = null;
     GoodsFragment gf = null;
+    StartFragment sf;
     int progressLevel = 0;
     ProgressBar pbWait;
 //    LiveData<ScannedCode> scannedGoodsData, scannedMainData, scannedEGFData;
     int retryBox = -1;
+    Context ctx;
     private BroadcastReceiver barcodeDataReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -312,7 +314,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         if (initScanUrovo()) {
             registerReceiverUrovo(true);
             barcodeDataReceiver = null;
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM, WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+//            getWindow().setFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM, WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         } else {
             registerReceiver(barcodeDataReceiver, new IntentFilter(ACTION_BARCODE_DATA));
         }
@@ -330,6 +332,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ctx = this;
         setContentView(R.layout.main_activity);
         dumpLog();
         FL.init(new FLConfig.Builder(this)
@@ -341,9 +344,13 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         FL.setEnabled(true);
         mViewModel = new ViewModelProvider(this).get(MainViewModel.class);
         pbWait = findViewById((R.id.pb_wait));
-        names = getResources().getStringArray(R.array.store_names);
-        FL.d(TAG,"Start " + App.packageName.trim() + " build " + App.versionCode + " store id '" + App.getStoreId() + "' " + App.getStoreName().trim() +
-                " current box " + App.currentBoxName + " id '" + App.currentBoxId + "'");
+//        names = getResources().getStringArray(R.array.store_names);
+        if(App.warehouse != null) {
+            FL.d(TAG, "Start " + App.packageName.trim() + " build " + App.versionCode + " store id '" + App.getStoreId() + "' " + App.getStoreName().trim() +
+                    " current box " + App.currentBoxName + " id '" + App.currentBoxId + "'");
+        } else {
+            FL.d(TAG, "First start " + App.packageName.trim() + " build " + App.versionCode);
+        }
         /*
         scannedGoodsData = mViewModel.getScannedGoodsFragment();
         scannedMainData = mViewModel.getScannedMainFragment();
@@ -415,6 +422,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQ_PERMISSION);
         }
+        /*
         if(App.getStoreName().isEmpty()) {
             adbSettings = new AlertDialog.Builder(this);
             adbSettings.setTitle(R.string.store_choice)
@@ -425,6 +433,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                         App.setStoreName(names[which]);
                     }).create().show();
         }
+
+         */
         soundPool= new SoundPool(MAX_STREAMS, AudioManager.STREAM_MUSIC, 0);
         soundPool.setOnLoadCompleteListener(this);
         soundId1 = soundPool.load(this, R.raw.pik, 1);
@@ -476,10 +486,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                             public void onClick(DialogInterface dialog, int which) {
                                 // The 'which' argument contains the index position
                                 // of the selected item
-                                FL.d(TAG, "Index = " + which + " store id=" + App.ids[which] + " name " + names[which]);
-                                App.setStoreIndex(which);
-                                App.setStoreId(App.ids[which]);
-                                App.setStoreName(names[which]);
+                                sf = (StartFragment) getSupportFragmentManager().findFragmentByTag(StartFragment.class.getSimpleName());
+                                if (sf != null) {
+                                    FL.d(TAG, "Index = " + which + " store id=" + App.warehouses[which].id);
+                                    App.setWarehouse(App.warehouses[which]);
+                                    sf.setStore();
+                                    Database.clearGoods();
+                                    refreshData();
+                                    refreshCells();
+                                }
                             }
                         }).create().show();
 
@@ -487,8 +502,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             case R.id.refresh_item:
                 FL.d(TAG, "Refresh clicked");
                 Database.clearGoods();
-                refreshData();
-//                if (App.state != App.START) refreshData();
+//                refreshData();
+                if (App.state != App.START) refreshData();
                 return true;
             case R.id.dct_num_item:
                 FL.d(TAG, "DCT num clicked");
@@ -640,22 +655,38 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
     public void refreshData() {
-        GetWSGoods getGoods = new GetWSGoods();
-
-        Database.clearData();
-        try {
-            /*
-            pbbar.setVisibility(View.VISIBLE);
-            tvPrompt.setVisibility(View.GONE);
-
-             */
-            goodsURL = getGoodsURL(App.getCurrentBox().id);
-            getGoods.run(goodsURL);
-
-            goodsRequest = true;
-
-        } catch (IOException e) {
-            FL.e(TAG, e.getMessage());
+        if(App.getPackMode()) {
+            if(!App.getCurrentPackId().isEmpty()) {
+                Log.d(TAG, "Get pack content");
+                GetWSPack getPack = new GetWSPack();
+                Database.clearData();
+                try {
+                    getPack.run(getPackURL(App.getCurrentPackId()));
+                } catch (IOException e) {
+                    FL.e(TAG, e.getMessage());
+                }
+            } else if(!App.getCurrentPackNum().isEmpty()){
+                Log.d(TAG, "Get pack content by num " + App.getCurrentPackNum());
+                GetWSPack getPack = new GetWSPack();
+                Database.clearData();
+                try {
+                    getPack.run(getPackNumURL(App.getCurrentPackNum()));
+                } catch (IOException e) {
+                    FL.e(TAG, e.getMessage());
+                }
+            }
+        } else {
+            if (App.getCurrentBox() != null) {
+                GetWSGoods getGoods = new GetWSGoods();
+                Database.clearData();
+                try {
+                    goodsURL = getGoodsURL(App.getCurrentBox().id);
+                    getGoods.run(goodsURL);
+                    goodsRequest = true;
+                } catch (IOException e) {
+                    FL.e(TAG, e.getMessage());
+                }
+            }
         }
     }
     public static class GetWSCells {
@@ -1051,6 +1082,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                     if (warehousesResult != null) {
                         Log.d(TAG, "Result = " + warehousesResult.success + " length = " + warehousesResult.counter);
                         if (warehousesResult.counter > 0) {
+                            /*
                             App.ids = new String[warehousesResult.counter];
                             App.storeCode = new String[warehousesResult.counter];
                             names = new String[warehousesResult.counter];
@@ -1063,6 +1095,32 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                                 App.storeMap.put(warehousesResult.Warehouses[i].id,warehousesResult.Warehouses[i].descr);
                                 App.codeMap.put(warehousesResult.Warehouses[i].id,warehousesResult.Warehouses[i].storeCode);
                             }
+
+                             */
+                            names = new String[warehousesResult.counter];
+                            App.warehouses = warehousesResult.Warehouses;
+                            for (int i = 0; i < warehousesResult.counter; i++) {
+                                names[i] = warehousesResult.Warehouses[i].descr;
+                            }
+                            runOnUiThread(() -> {
+                                FL.d(TAG, "Store names length = " + names.length);
+                                adbSettings = new AlertDialog.Builder(ctx);
+                                if (App.warehouse == null) {
+                                    adbSettings.setTitle(R.string.store_choice)
+                                            .setItems(names, (dialog, which) -> {
+                                                FL.d(TAG, "Index = " + which + " store id=" + App.warehouses[which].id);
+                                                App.setWarehouse(App.warehouses[which]);
+                                                sf = (StartFragment) getSupportFragmentManager().findFragmentByTag(StartFragment.class.getSimpleName());
+                                                if (sf != null) {
+                                                    sf.setStore();
+                                                }
+                                                Database.clearGoods();
+//                                                refreshData();
+                                                refreshCells();
+//                                                mViewModel.getGoodsData();
+                                            }).create().show();
+                                }
+                            });
                         }
                     }
 
@@ -1311,4 +1369,81 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             processScannedData(new ScannedCode(codeId, barcodeStr),App.state);
         }
     };
+    public class GetWSPack {
+        OkHttpClient client;
+        String TAG = "GetWSPack";
+        void run(String url) throws IOException {
+            Request request = new Request.Builder()
+                    .url(url)
+                    .build();
+            Log.d(TAG, "GET url " + url);
+            WebserviceHTTPClient httpClient = new WebserviceHTTPClient(url);
+            client = httpClient.getClient();
+            Call call = client.newCall(request);
+            call.enqueue(new Callback() {
+                public void onResponse(Call call, Response response)
+                        throws IOException {
+                    final String resp = response.body().string();
+                    GsonBuilder builder = new GsonBuilder();
+                    Gson gson = builder.create();
+                    PackResult pack = gson.fromJson(resp, PackResult.class);
+                    if (pack != null) {
+                        Log.d(TAG, "Result = " + pack.success + " length = " + pack.counter);
+                        if (pack.counter > 0) {
+                            Database.beginTr();
+                            for (int i = 0; i < pack.counter; i++) {
+                                /*
+                                Log.d(TAG, " " + gs.goodsRows[i].id + " " + gs.goodsRows[i].description + " " + gs.goodsRows[i].article + " " + gs.goodsRows[i].qnt
+                                        + " " + gs.goodsRows[i].cell);
+
+                                 */
+                                Database.addPack(
+                                        pack.rows[i].goods,
+                                        pack.rows[i].goods_descr,
+                                        pack.rows[i].mdoc,
+                                        pack.rows[i].goods_article,
+                                        pack.rows[i].qnt,
+                                        pack.rows[i].packqnt,
+                                        pack.rows[i].goods_brand,
+                                        pack.rows[i].cell
+                                );
+                            }
+                            Database.endTr();
+                        }
+//                        runOnUiThread(waitBox);
+                    }
+//                    goodsRequest = false;
+                    mViewModel.loadGoodsData();
+                }
+
+                public void onFailure(Call call, IOException e) {
+                    Log.d(TAG, e.getMessage());
+                }
+            });
+        }
+    }
+    public String getPackURL(String packId) {
+        URI uri = null;
+        try {
+            uri = new URI(
+                    Config.scheme, null, Config.ip, Config.port,
+                    Config.packPath + "id/" + App.getStoreId() + "/" + packId + "/",
+                    null, null);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return uri.toASCIIString();
+    }
+    public String getPackNumURL(String packNum) {
+        URI uri = null;
+        try {
+            uri = new URI(
+                    Config.scheme, null, Config.ip, Config.port,
+                    Config.packPath + "num/" + App.getStoreId() + "/" + packNum + "/",
+                    null, null);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return uri.toASCIIString();
+    }
 }

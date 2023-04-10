@@ -185,7 +185,7 @@ public class ExcessiveGoodsFragment extends Fragment {
                             prefix = Integer.parseInt(input.substring(0, input.indexOf(".")));
                             suffix = Integer.parseInt(input.substring(input.indexOf(".") + 1));
                             cellName = String.format("%02d",prefix) + String.format("%03d",suffix);
-                            result = App.storeCode[App.getStoreIndex()] + cellName + "000";
+                            result = App.warehouse.storeCode + cellName + "000";
                             int [] resDigit = new int[12];
                             for (int i = 0; i < 12; i++) {
                                 resDigit[i] = Integer.parseInt(result.substring(i, i+1));
@@ -428,7 +428,7 @@ public class ExcessiveGoodsFragment extends Fragment {
                     if (c == 10) c = 0;
                     res = res + c;
                     FL.d(TAG, "Rebuilt EAN13 code " + res);
-                    cellIn = res.startsWith(App.storeCode[App.getStoreIndex()]) || res.startsWith("1900") && App.getStoreIndex() == 3? Database.getCellByName(Config.getCellName(res)) : null;
+                    cellIn = res.startsWith(App.warehouse.storeCode) || res.startsWith("1900") && App.warehouse.id == "    12SPR"? Database.getCellByName(Config.getCellName(res)) : null;
                     if (cellIn != null) {
                         FL.d(TAG, "Scanned cell " + cellIn.descr);
                         etCell.setText(cellIn.descr);

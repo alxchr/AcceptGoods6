@@ -6,11 +6,11 @@ android {
     compileSdk 33
 
     defaultConfig {
-        applicationId "ru.abch.acceptgoods6"
+        applicationId "ru.abch.universalacceptgoods"
         minSdk 25
         targetSdk 33
-        versionCode 21
-        versionName "6.21"
+        versionCode 1
+        versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 

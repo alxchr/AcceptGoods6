@@ -40,6 +40,7 @@ public class GoodsFragment extends Fragment {
         gf.qnt = qnt;
         gf.total = gr.qnt;
         FL.d(TAG,"Goods " + gr.article + " total " + gr.qnt + " qnt " + qnt);
+        Database.getPackRowById(gr.id);
         return gf;
     }
     EditText etCell, etQnt;
@@ -106,8 +107,13 @@ public class GoodsFragment extends Fragment {
                             adbConfirmLost.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
                                 Log.d(TAG, "Confirm lost goods ");
                                 FL.d(TAG, "Add lost goods " + goodsRow.article + " qnt " + qnt);
-                                Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
-                                        qnt, cellIn.id, MainActivity.getCurrentTime());
+                                if(App.getPackMode()) {
+                                    placePackGoods(App.getStoreMan(), goodsRow.id, "",
+                                            qnt, cellIn.id, MainActivity.getCurrentTime());
+                                } else {
+                                    Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
+                                            qnt, cellIn.id, MainActivity.getCurrentTime());
+                                }
 //                                ((MainActivity) requireActivity()).uploadGoods();
                                 loadGoodsData();
                             });
@@ -155,7 +161,7 @@ public class GoodsFragment extends Fragment {
                             prefix = Integer.parseInt(input.substring(0, input.indexOf(".")));
                             suffix = Integer.parseInt(input.substring(input.indexOf(".") + 1));
                             cellName = String.format("%02d",prefix) + String.format("%03d",suffix);
-                            result = App.storeCode[App.getStoreIndex()] + cellName + "000";
+                            result = App.warehouse.storeCode + cellName + "000";
                             int [] resDigit = new int[12];
                             for (int i = 0; i < 12; i++) {
                                 resDigit[i] = Integer.parseInt(result.substring(i, i+1));
@@ -179,8 +185,13 @@ public class GoodsFragment extends Fragment {
                                     }
                                     if (qnt > 0 && qnt <= total) {
                                         FL.d(TAG, "Add placed goods " + goodsRow.article + " qnt " + qnt);
-                                        Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
-                                                qnt, cellIn.id, MainActivity.getCurrentTime());
+                                        if(App.getPackMode()) {
+                                            placePackGoods(App.getStoreMan(), goodsRow.id, "",
+                                                    qnt, cellIn.id, MainActivity.getCurrentTime());
+                                        } else {
+                                            Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
+                                                    qnt, cellIn.id, MainActivity.getCurrentTime());
+                                        }
 //                                        ((MainActivity) requireActivity()).uploadGoods();
                                         loadGoodsData();
                                         App.currentDistance = cellIn.distance;
@@ -213,8 +224,13 @@ public class GoodsFragment extends Fragment {
                                         }
                                         if (qnt > 0 && qnt <= total) {
                                             FL.d(TAG, "Add placed goods " + goodsRow.article + " qnt " + qnt);
-                                            Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
-                                                    qnt, cellIn.id, MainActivity.getCurrentTime());
+                                            if(App.getPackMode()) {
+                                                placePackGoods(App.getStoreMan(), goodsRow.id, "",
+                                                        qnt, cellIn.id, MainActivity.getCurrentTime());
+                                            } else {
+                                                Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
+                                                        qnt, cellIn.id, MainActivity.getCurrentTime());
+                                            }
 //                                            ((MainActivity) requireActivity()).uploadGoods();
                                             loadGoodsData();
                                         } else {
@@ -284,8 +300,13 @@ public class GoodsFragment extends Fragment {
         }
         if (qnt > 0 && qnt <= total) {
             FL.d(TAG, "Add lost goods " + goodsRow.article + " qnt " + qnt);
-            Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
-                    qnt, cellIn.id, MainActivity.getCurrentTime());
+            if(App.getPackMode()) {
+                placePackGoods(App.getStoreMan(), goodsRow.id, "",
+                        qnt, cellIn.id, MainActivity.getCurrentTime());
+            } else {
+                Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
+                        qnt, cellIn.id, MainActivity.getCurrentTime());
+            }
 //            ((MainActivity) requireActivity()).uploadGoods();
             loadGoodsData();
             App.currentDistance = cellIn.distance;
@@ -418,7 +439,7 @@ public class GoodsFragment extends Fragment {
                     res = res + c;
                     FL.d(TAG, "Rebuilt EAN13 code " + res);
 //                    cellIn = res.startsWith(App.storeCode[App.getStoreIndex()]) || res.startsWith("1900") && App.getStoreId().equals("    12SPR")? Database.getCellByName(Config.getCellName(res)) : null;
-                    String code = App.codeMap.get(App.getStoreId()) == null? "aa" : App.codeMap.get(App.getStoreId());
+                    String code = App.warehouse == null? "aa" : App.warehouse.storeCode;
                     assert code != null;
                     cellIn = res.startsWith(code) || res.startsWith("1900") && App.getStoreId().equals("    12SPR")?
                             Database.getCellByName(Config.getCellName(res)) : null;
@@ -433,8 +454,13 @@ public class GoodsFragment extends Fragment {
                             }
                             if (qnt > 0 && qnt <= total) {
                                 FL.d(TAG, "Add placed goods " + goodsRow.article + " qnt " + qnt);
-                                Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
-                                        qnt, cellIn.id, MainActivity.getCurrentTime());
+                                if(App.getPackMode()) {
+                                    placePackGoods(App.getStoreMan(), goodsRow.id, "",
+                                            qnt, cellIn.id, MainActivity.getCurrentTime());
+                                } else {
+                                    Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
+                                            qnt, cellIn.id, MainActivity.getCurrentTime());
+                                }
 //                                ((MainActivity) requireActivity()).uploadGoods();
                                 loadGoodsData();
                                 App.currentDistance = cellIn.distance;
@@ -466,8 +492,13 @@ public class GoodsFragment extends Fragment {
                                 }
                                 if (qnt > 0 && qnt <= total) {
                                     FL.d(TAG, "Add placed goods " + goodsRow.article + " qnt " + qnt);
-                                    Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
-                                            qnt, cellIn.id, MainActivity.getCurrentTime());
+                                    if(App.getPackMode()) {
+                                        placePackGoods(App.getStoreMan(), goodsRow.id, "",
+                                                qnt, cellIn.id, MainActivity.getCurrentTime());
+                                    } else {
+                                        Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
+                                                qnt, cellIn.id, MainActivity.getCurrentTime());
+                                    }
 //                                    ((MainActivity) requireActivity()).uploadGoods();
                                     loadGoodsData();
                                 } else {
@@ -490,5 +521,23 @@ public class GoodsFragment extends Fragment {
                 }
             }
         }
+    }
+    private void placePackGoods(int storeman, String goodsId, String barcode, int qnt, String cell, String datetime) {
+        int rows = goodsRow.packDetails.length;
+        int inputQnt = qnt;
+        for (int i = 0; i < rows; i++) {
+            int rowQnt = Math.min(goodsRow.packDetails[i].packQnt, goodsRow.packDetails[i].qnt);
+            int q = Math.min(inputQnt, rowQnt);
+            Database.addPackGoods(storeman, goodsId, barcode, q, cell, datetime, goodsRow.packDetails[i].mdoc);
+            if(inputQnt > rowQnt) {
+                inputQnt -= q;
+            } else {
+                break;
+            }
+        }
+
+    }
+    private void placeExcessivePackGoods(int storeman, String goodsId, String barcode, int qnt, String cell, String datetime,String lostGoodsCellId) {
+
     }
 }

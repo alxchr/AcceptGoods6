@@ -69,7 +69,7 @@ public class MainViewModel extends ViewModel {
         return goodsData;
     }
     public void loadGoodsData() {
-        ArrayList<GoodsRow> taskList = Database.getTaskList();
+        ArrayList<GoodsRow> taskList = (App.getPackMode())? Database.getPackList() : Database.getTaskList();
         taskList.sort((lhs, rhs) -> {
             int ret = 0;
             if (lhs != null && rhs != null) {
@@ -79,7 +79,7 @@ public class MainViewModel extends ViewModel {
             }
             return ret;
         });
-//        Log.d(TAG, "Task list size " + taskList.size());
+        Log.d(TAG, "Task list size " + taskList.size());
         goodsData.postValue(taskList);
     }
 
