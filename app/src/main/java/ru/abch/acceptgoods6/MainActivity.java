@@ -103,6 +103,7 @@ import ru.abch.acceptgoods6.ui.main.ExcessiveGoodsFragment;
 import ru.abch.acceptgoods6.ui.main.GoodsFragment;
 import ru.abch.acceptgoods6.ui.main.MainFragment;
 import ru.abch.acceptgoods6.ui.main.MainViewModel;
+import ru.abch.acceptgoods6.ui.main.PhotoFragment;
 import ru.abch.acceptgoods6.ui.main.StartFragment;
 
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener, SoundPool.OnLoadCompleteListener {
@@ -143,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     ExcessiveGoodsFragment egf = null;
     GoodsFragment gf = null;
     StartFragment sf;
+    PhotoFragment phf;
     int progressLevel = 0;
     ProgressBar pbWait;
 //    LiveData<ScannedCode> scannedGoodsData, scannedMainData, scannedEGFData;
@@ -164,7 +166,11 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     };
     public void processScannedData(ScannedCode sc, int state) {
-        if(state == App.SELECTEXCESSIVEGOODS) {
+        notification();
+        if(state == App.START) {
+            sf = (StartFragment) getSupportFragmentManager().findFragmentByTag(StartFragment.class.getSimpleName());
+            if(sf != null) sf.processScan(sc);
+        } else if(state == App.SELECTEXCESSIVEGOODS) {
 //            scannedEGFragment.postValue(sc);
 //            FL.d(TAG,"To ExcessiveGoodsFragment data " + sc.data + " id " + sc.codeId);
             egf = (ExcessiveGoodsFragment) getSupportFragmentManager().findFragmentByTag(ExcessiveGoodsFragment.class.getSimpleName());
@@ -251,9 +257,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             Toast.makeText(context, phrase, Toast.LENGTH_LONG).show();
         }
     };
-    public void gotoMainFragment() {
+    public void gotoPhotoFragment() {
 //        if(App.state != App.SELECTGOODS) App.state = App.MAINCYCLE;
 //        getDump();
+        if(phf == null) phf = PhotoFragment.newInstance();
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, phf, PhotoFragment.class.getSimpleName())
+                .commitNow();
+    }
+    public void gotoMainFragment() {
         if(mf == null) mf = MainFragment.newInstance();
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, mf, MainFragment.class.getSimpleName())
@@ -328,6 +340,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 finish();
             }
         }
+    }
+    void notification() {
+        soundPool.play(soundId1, 1, 1, 0, 0, 1);
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -418,11 +433,26 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         mTTS = new TextToSpeech(this, this);
+        ArrayList<String> requestPermissionsList = new ArrayList<>();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                PackageManager.PERMISSION_GRANTED) {
+            requestPermissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) !=
+                PackageManager.PERMISSION_GRANTED) {
+            requestPermissionsList.add(Manifest.permission.CAMERA);
+        }
+        if(requestPermissionsList.size() > 0) {
+            String[] requestPermissionsArray = new String[requestPermissionsList.size()];
+            requestPermissionsArray = requestPermissionsList.toArray(requestPermissionsArray);
+            ActivityCompat.requestPermissions(this, requestPermissionsArray, REQ_PERMISSION);
+        }
+        /*
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
                 PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQ_PERMISSION);
         }
-        /*
+
         if(App.getStoreName().isEmpty()) {
             adbSettings = new AlertDialog.Builder(this);
             adbSettings.setTitle(R.string.store_choice)
@@ -462,7 +492,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             // start new box
             refreshCells();
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, StartFragment.newInstance())
+                    .replace(R.id.container, StartFragment.newInstance(), StartFragment.class.getSimpleName())
                     .commitNow();
         } else {
             Log.d(TAG, "onCreate() current box " + App.getCurrentBox().descr);
@@ -484,16 +514,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 adbSettings.setTitle(R.string.store_choice)
                         .setItems(names, new DialogInterface.OnClickListener(){
                             public void onClick(DialogInterface dialog, int which) {
-                                // The 'which' argument contains the index position
-                                // of the selected item
+                                FL.d(TAG, "Index = " + which + " store id=" + App.warehouses[which].id);
                                 sf = (StartFragment) getSupportFragmentManager().findFragmentByTag(StartFragment.class.getSimpleName());
                                 if (sf != null) {
-                                    FL.d(TAG, "Index = " + which + " store id=" + App.warehouses[which].id);
                                     App.setWarehouse(App.warehouses[which]);
                                     sf.setStore();
                                     Database.clearGoods();
                                     refreshData();
                                     refreshCells();
+                                    System.exit(0);
                                 }
                             }
                         }).create().show();
@@ -584,7 +613,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                     App.setCurrentBox(null);
                     Database.clearGoods();
                     Database.clearData();
-                    mViewModel.getGoodsData();
+                    mViewModel.loadGoodsData();
+//                    App.setPackMode(false);
+                    App.setCurrentPackId("");
+                    App.setCurrentPackNum("");
                 });
                 adbClear.create().show();
                 return true;
@@ -592,10 +624,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 showAdbPlaced();
                 return true;
             case R.id.lost_item:
+                Log.d(TAG,"state " + App.state);
                 if(App.state == App.PUTGOODS) {
-                    Cell lostGoodsCell = Database.getCellByName(getResources().getString(R.string.lost_cell_name));
-                    if(lostGoodsCell != null) {
-                        Log.d(TAG, "Lost goods cell id " + lostGoodsCell.id);
+                    if (App.getPackMode()) {
+                        Log.d(TAG, "Lost goods in pack");
                         adbLost = new AlertDialog.Builder(this);
                         adbLost.setCancelable(false);
                         adbLost.setMessage(R.string.confirm_lost);
@@ -606,11 +638,31 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                         adbLost.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
                             Log.d(TAG, "Confirm lost goods ");
                             GoodsFragment gf = (GoodsFragment) getSupportFragmentManager().findFragmentByTag(GoodsFragment.class.getSimpleName());
-                            if(gf != null) {
-                                gf.processLost(lostGoodsCell);
+                            if (gf != null) {
+                                gf.processLost();
                             }
                         });
                         adbLost.create().show();
+                    } else {
+                        Cell lostGoodsCell = Database.getCellByName(getResources().getString(R.string.lost_cell_name));
+                        if (lostGoodsCell != null) {
+                            Log.d(TAG, "Lost goods cell id " + lostGoodsCell.id);
+                            adbLost = new AlertDialog.Builder(this);
+                            adbLost.setCancelable(false);
+                            adbLost.setMessage(R.string.confirm_lost);
+                            adbLost.setTitle(R.string.lost_goods);
+                            adbLost.setNegativeButton(R.string.no, (dialogInterface, i) -> {
+
+                            });
+                            adbLost.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
+                                Log.d(TAG, "Confirm lost goods ");
+                                GoodsFragment gf = (GoodsFragment) getSupportFragmentManager().findFragmentByTag(GoodsFragment.class.getSimpleName());
+                                if (gf != null) {
+                                    gf.processLost(lostGoodsCell);
+                                }
+                            });
+                            adbLost.create().show();
+                        }
                     }
                 }
                 return true;
@@ -640,6 +692,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         GetWSDump getWSDump = new GetWSDump();
         String pathPrefix = (type == POSTEXCESSIVE)? Config.dumpExcessivePath : Config.dumpPath;
         try {
+//            String scheme = "http", ip = "192.168.21.244";
+//            int port = 8080;
             uri = new URI(
                     Config.scheme, null, Config.ip, Config.port,
                     pathPrefix + App.getStoreId() + "/" + App.getDctNum() + "/",
@@ -655,13 +709,40 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
     public void refreshData() {
+        Log.d(TAG,"Pack mode " + App.getPackMode());
+        /*
+        GetWSBarcodes getBarCodes = new GetWSBarcodes();
+        try {
+            getBarCodes.run(barcodesURL);
+            barcodesRequest = true;
+        } catch (IOException e) {
+            FL.e(TAG, e.getMessage());
+        }
+
+         */
         if(App.getPackMode()) {
             if(!App.getCurrentPackId().isEmpty()) {
                 Log.d(TAG, "Get pack content");
                 GetWSPack getPack = new GetWSPack();
                 Database.clearData();
                 try {
+                    uri = new URI(
+                            Config.scheme, null, Config.ip, Config.port,
+                            Config.packBarcodesPath + "id/" + App.getStoreId() + "/" + App.getCurrentPackId() + "/",
+                            null, null);
+                } catch (URISyntaxException e) {
+                    FL.e(TAG, e.getMessage());
+                }
+                barcodesURL = uri.toASCIIString();
+                try {
                     getPack.run(getPackURL(App.getCurrentPackId()));
+                } catch (IOException e) {
+                    FL.e(TAG, e.getMessage());
+                }
+                GetWSBarcodes getBarCodes = new GetWSBarcodes();
+                try {
+                    getBarCodes.run(barcodesURL);
+                    barcodesRequest = true;
                 } catch (IOException e) {
                     FL.e(TAG, e.getMessage());
                 }
@@ -671,6 +752,22 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 Database.clearData();
                 try {
                     getPack.run(getPackNumURL(App.getCurrentPackNum()));
+                } catch (IOException e) {
+                    FL.e(TAG, e.getMessage());
+                }
+                GetWSBarcodes getBarCodes = new GetWSBarcodes();
+                try {
+                    uri = new URI(
+                            Config.scheme, null, Config.ip, Config.port,
+                            Config.packBarcodesPath + "num/" + App.getStoreId() + "/" + App.getCurrentPackNum() + "/",
+                            null, null);
+                } catch (URISyntaxException e) {
+                    FL.e(TAG, e.getMessage());
+                }
+                barcodesURL = uri.toASCIIString();
+                try {
+                    getBarCodes.run(barcodesURL);
+                    barcodesRequest = true;
                 } catch (IOException e) {
                     FL.e(TAG, e.getMessage());
                 }
@@ -1392,6 +1489,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                         if (pack.counter > 0) {
                             Database.beginTr();
                             for (int i = 0; i < pack.counter; i++) {
+                                App.setCurrentPackId(pack.rows[i].packid);
+                                App.setCurrentPackNum(pack.rows[i].packnum);
                                 /*
                                 Log.d(TAG, " " + gs.goodsRows[i].id + " " + gs.goodsRows[i].description + " " + gs.goodsRows[i].article + " " + gs.goodsRows[i].qnt
                                         + " " + gs.goodsRows[i].cell);
@@ -1409,6 +1508,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                                 );
                             }
                             Database.endTr();
+
                         }
 //                        runOnUiThread(waitBox);
                     }
@@ -1445,5 +1545,125 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             e.printStackTrace();
         }
         return uri.toASCIIString();
+    }
+    public void uploadPack() {
+        Log.d(TAG,"uploadPack()");
+        uploadGoodsPosition(Database.goodsToUpload());
+    }
+    private void uploadGoodsPosition(GoodsPosition[] gpa) {
+        try {
+//            String scheme = "http", ip = "192.168.21.244";
+//            int port = 8080;
+            uri = new URI(
+                    Config.scheme, null, Config.ip, Config.port,
+                    Config.postGoodsPath + App.getStoreId() + "/" + App.getStoreMan() + "/",
+                    null, null);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        acceptedGoodsURL = uri.toASCIIString();
+        if(gpa != null && gpa.length > 0) {
+            GoodsResult gr = new GoodsResult(true, gpa.length);
+            gr.Goods = gpa;
+            gr.storeman = App.getStoreMan();
+            postWS = new PostWebservice();
+            postWS.type = POSTGOODS;
+            Gson gson = new Gson();
+            try {
+                postWS.post(acceptedGoodsURL, gson.toJson(gr));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    public class GetWSStoreman {
+        OkHttpClient client;
+        String TAG = "GetWSStoreman";
+        void run(String url) throws IOException {
+            Request request = new Request.Builder()
+                    .url(url)
+                    .build();
+            Log.d(TAG, "GET url " + url);
+            WebserviceHTTPClient httpClient = new WebserviceHTTPClient(url);
+            client = httpClient.getClient();
+            Call call = client.newCall(request);
+            call.enqueue(new Callback() {
+                public void onResponse(Call call, Response response)
+                        throws IOException {
+                    final String resp = response.body().string();
+                    GsonBuilder builder = new GsonBuilder();
+                    Gson gson = builder.create();
+                    Storeman storeman = gson.fromJson(resp, Storeman.class);
+                    if (storeman != null) {
+                        Log.d(TAG, "Storeman " + storeman.fullname + " num " + storeman.num + " id " + storeman.id);
+                        App.setStoremanId(storeman.id);
+                    }
+                }
+                public void onFailure(Call call, IOException e) {
+                    Log.d(TAG, e.getMessage());
+                }
+            });
+        }
+    }
+    public void getStoremanId(){
+        try {
+            uri = new URI(
+                    Config.scheme, null, Config.ip, Config.port,
+                    Config.storemanPath + App.getStoreMan() + "/",
+                    null, null);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        GetWSStoreman getWSStoreman = new GetWSStoreman();
+        try {
+            getWSStoreman.run(uri.toASCIIString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public class GetWSCamera {
+        OkHttpClient client;
+        String TAG = "GetWSCamera";
+        void run(String url) throws IOException {
+            Request request = new Request.Builder()
+                    .url(url)
+                    .build();
+            Log.d(TAG, "GET url " + url);
+            WebserviceHTTPClient httpClient = new WebserviceHTTPClient(url);
+            client = httpClient.getClient();
+            Call call = client.newCall(request);
+            call.enqueue(new Callback() {
+                public void onResponse(Call call, Response response)
+                        throws IOException {
+                    final String resp = response.body().string();
+                    GsonBuilder builder = new GsonBuilder();
+                    Gson gson = builder.create();
+                    Camera camera = gson.fromJson(resp, Camera.class);
+                    if (camera != null) {
+                        FL.d(TAG, "Camera " + camera.descr + " ip " + camera.ip);
+                        App.setIpcam(camera.ip);
+                    }
+                }
+                public void onFailure(Call call, IOException e) {
+                    Log.d(TAG, e.getMessage());
+                }
+            });
+        }
+    }
+    public void getCamera(int num){
+        try {
+            uri = new URI(
+                    Config.scheme, null, Config.ip, Config.port,
+                    Config.cameraPath + App.getStoreId() + "/" + num + "/",
+                    null, null);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        GetWSCamera getWSCamera = new GetWSCamera();
+        try {
+            getWSCamera.run(uri.toASCIIString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

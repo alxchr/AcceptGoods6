@@ -318,19 +318,27 @@ public class ExcessiveGoodsFragment extends Fragment {
                 qnt = 0;
             }
             String cellName, input = etCell.getText().toString();
-            if (CheckCode.checkCellStr(input)) {  //manual cell input
+//            Log.d(TAG, "Cell " + input);
+//            if (CheckCode.checkCellStr(input)) {  //manual cell input
+            /*
                 int prefix, suffix;
                 prefix = Integer.parseInt(input.substring(0, input.indexOf(".")));
                 suffix = Integer.parseInt(input.substring(input.indexOf(".") + 1));
                 cellName = String.format("%02d",prefix) + String.format("%03d",suffix);
                 cellIn = Database.getCellByName(cellName);
+
+             */
                 if(cellIn != null) {
                     etCell.setText(cellIn.descr);
                     if(goodsId != null && qnt > 0 && qnt < 10000) {
-                        Database.addExcessiveGoods(App.getStoreMan(), goodsId, "",
-                                qnt, cellIn.id, MainActivity.getCurrentTime(),
-                                Database.getCellByName(getResources().getString(R.string.lost_cell_name)).id);
-                        ((MainActivity) requireActivity()).uploadGoods();
+                        Cell lost = Database.getCellByName(getResources().getString(R.string.lost_cell_name));
+                        if (lost != null) {
+                            Database.addExcessiveGoods(App.getStoreMan(), goodsId, "",
+                                    qnt, cellIn.id, MainActivity.getCurrentTime(), lost.id);
+                            ((MainActivity) requireActivity()).uploadGoods();
+                        } else {
+                            FL.e(TAG,"No lost goods cell");
+                        }
                         MainActivity.mViewModel.loadGoodsData();
                         App.state = previousState;
                         FL.d(TAG, "gotoMainFragment() state " + App.state);
@@ -342,16 +350,18 @@ public class ExcessiveGoodsFragment extends Fragment {
                     etCell.setText("");
                     MainActivity.say(getResources().getString(R.string.wrong_cell));
                 }
-            } else {
-                etCell.setText("");
-                MainActivity.say(getResources().getString(R.string.check_info));
-            }
+//            } else {
+//                etCell.setText("");
+//                MainActivity.say(getResources().getString(R.string.check_info));
+//            }
 //            Log.d(TAG, "Goods id " + goodsId + " cellIn " + cellIn.descr + " qnt " + qnt);
 
         });
     }
     private void addScannedGoods(String barcode) {
-        GoodsRow scannedGoods = Database.getGoodsRow(barcode);
+//        GoodsRow scannedGoods = Database.getGoodsRow(barcode);
+        GoodsRow scannedGoods = App.getPackMode()? Database.getPackRow(barcode)
+                : Database.getGoodsRow(barcode);
         if (scannedGoods != null) {
             String info = scannedGoods.article + " " + scannedGoods.description;
             tvGoodsInfo.setText(info);

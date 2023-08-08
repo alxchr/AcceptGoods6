@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Раскладка ящика</string>
-    <string name="box">Ящик \n(ввод через .)</string>
+    <string name="box">Ящик или \nпалета</string>
     <string name="cell">Ячейка  (ввод через .)</string>
     <string name="goods">Товар</string>
     <string name="store">Склад</string>
@@ -47,4 +47,9 @@
     <string name="clear">Стереть</string>
     <string name="upload">Отправить</string>
     <string name="clear_msg">Стереть все данные о размещении товаров?</string>
+    <string name="empty_pack_tts">Пустая палета</string>
+    <string name="camera">Камера</string>
+    <string name="enter_camera_tts">Сканируйте или введите номер камеры</string>
+    <string name="cancel">Отмена</string>
+    <string name="photo">"+ Фото"</string>
 </resources>

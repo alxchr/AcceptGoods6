@@ -54,8 +54,8 @@ public class App extends Application {
     public static Warehouse2 warehouse = null;
     private static final String storeKey = "store";
     private static boolean packMode;
-    private static final String packModeKey = "pack_mode", packIdKey = "pack_id", packNumKey = "pack_num";
-    private static String packId, packNum;
+    private static final String packModeKey = "pack_mode", packIdKey = "pack_id", packNumKey = "pack_num", storemanIdKey = "storeman_id";
+    private static String packId, packNum, storemanId, ipcam = "";
     @Override
     public void onCreate() {
         super.onCreate();
@@ -85,6 +85,7 @@ public class App extends Application {
         packMode = sp.getBoolean(packModeKey, false);
         packId = sp.getString(packIdKey,"");
         packNum = sp.getString(packNumKey,"");
+        storemanId =  sp.getString(storemanIdKey,"");
         db = new Database(this);
         db.open();
     }
@@ -194,5 +195,20 @@ public class App extends Application {
     public static void setCurrentPackNum(String num) {
         sp.edit().putString(packNumKey, num).commit();
         packNum = num;
+    }
+    public static void setStoremanId(String id) {
+        storemanId = id;
+        Log.d(TAG, "Set storeman id =" + id);
+        sp.edit().putString(storemanIdKey, id).apply();
+    }
+    public static String getStoremanId() {
+        return storemanId;
+    }
+    public static void setIpcam(String ip) {
+        ipcam = ip;
+        FL.d(TAG, "Set ipcam =" + ip);
+    }
+    public static String getIpcam() {
+        return ipcam;
     }
 }

@@ -110,6 +110,8 @@ public class MainFragment extends Fragment {
                             FL.d(TAG,"Manual input =" + input + " cell =" + cell + " cell name =" + cellName);
                             outBox = Database.getCellByName(cellName);
                             if(outBox != null) {
+                                Log.d(TAG,"Box " + outBox.descr);
+                                App.setPackMode(false);
                                 Database.purgeSentData(true);   //no current box, all sent data must be cleared
                                 etBox.setText(outBox.descr);
                                 App.setCurrentBox(outBox);
@@ -119,13 +121,15 @@ public class MainFragment extends Fragment {
                                 etBox.setText("");
                                 MainActivity.say(getResources().getString(R.string.wrong_box));
                             }
-                        } if(!input.isEmpty()) {
-//                            Log.d(TAG,"Pallette num " + input);
+                        } else if(!input.isEmpty()) {
+                            Log.d(TAG,"Pallette num " + input);
+                            Database.purgeSentData(true);
                             App.setCurrentPackNum(input);
                             App.setPackMode(true);
                             etBox.setText(input);
                             etBox.setEnabled(false);
                             ((MainActivity) requireActivity()).refreshData();
+                            ((MainActivity) requireActivity()).gotoPhotoFragment();
                         } else {
                             etBox.setText("");
                             MainActivity.say(getResources().getString(R.string.wrong_cell));
@@ -176,7 +180,8 @@ public class MainFragment extends Fragment {
         }
         boxSaved = savedBoxDescr.length() > 0;
 //        etBox.setText(savedBoxDescr);
-        if(!Database.getPlacedList().isEmpty() && Database.getTaskList().isEmpty()) {
+        if(!Database.getPlacedList().isEmpty() &&
+                ((Database.getTaskList().isEmpty() && !App.getPackMode()) || (Database.getPackList().isEmpty() && App.getPackMode()))) {
             ((MainActivity) requireActivity()).showAdbPlaced();
         }
         goodsList = MainActivity.mViewModel.getGoodsData();
@@ -209,8 +214,13 @@ public class MainFragment extends Fragment {
                     App.state = App.SELECTGOODS;
                 } else {
                     if(App.state != App.START) {
-                        MainActivity.say(getResources().getString(R.string.empty_box_tts));
-                        ((MainActivity) requireActivity()).uploadGoods();
+                        if(App.getPackMode()) {
+                            MainActivity.say(getResources().getString(R.string.empty_pack_tts));
+                            ((MainActivity) requireActivity()).uploadPack();
+                        } else {
+                            MainActivity.say(getResources().getString(R.string.empty_box_tts));
+                            ((MainActivity) requireActivity()).uploadGoods();
+                        }
                     }
                     etBox.setEnabled(true);
                     etBox.setText("");
@@ -268,10 +278,10 @@ public class MainFragment extends Fragment {
                                     }
                                     break;
                                 case App.SELECTGOODS:
-                                    currentGoods = Database.getGoodsRow(res);
+                                    currentGoods = App.getPackMode()? Database.getPackRow(res) : Database.getGoodsRow(res);
                                     if (currentGoods == null) {
                                         MainActivity.say(getResources().getString(R.string.wrong_goods));
-                                        FL.d(TAG, "Wrong goods code " + res);
+                                        FL.d(TAG, "Select goods: Wrong barcode " + res);
                                     } else {
                                         int unitQnt = Database.getBarcodeQnt(res);
                                         ((MainActivity) requireActivity()).gotoGoodsFragment(currentGoods, unitQnt);
@@ -285,9 +295,11 @@ public class MainFragment extends Fragment {
                             if(scannedCode.data.startsWith("UI") && scannedCode.data.length() == 11) {
                                 String packId = scannedCode.data.substring(2).replaceAll("\\."," ");
                                 Log.d(TAG, "Pack id scanned " + packId);
+                                Database.purgeSentData(true);
                                 App.setPackMode(true);  //process pack
                                 App.setCurrentPackId(packId);
                                 ((MainActivity) requireActivity()).refreshData();
+                                ((MainActivity) requireActivity()).gotoPhotoFragment();
                             } else {
                                 MainActivity.say(getResources().getString(R.string.wrong_box));
                             }
@@ -323,7 +335,7 @@ public class MainFragment extends Fragment {
                                             String goodsQnt = scannedCode.data.substring(10).replaceAll("\\.", "");
                                             int qnt = Integer.parseInt(goodsQnt, 36);
                                             FL.d(TAG, "Goods id ='" + goodsId + "' goods qnt ='" + goodsQnt + "' " + qnt);
-                                            GoodsRow gr = Database.getGoodsRowById(goodsId);
+                                            GoodsRow gr = App.getPackMode()? Database.getPackRowById(goodsId) : Database.getGoodsRowById(goodsId);
                                             if (gr == null) {
                                                 MainActivity.say(getResources().getString(R.string.wrong_goods));
                                                 FL.d(TAG, "Wrong goods code " + scannedCode.data);
@@ -332,7 +344,8 @@ public class MainFragment extends Fragment {
                                                 ((MainActivity) requireActivity()).gotoGoodsFragment(currentGoods, qnt);
                                             }
                                         } else {
-                                            currentGoods = Database.getGoodsRow(scannedCode.data);
+                                            currentGoods = App.getPackMode()? Database.getPackRow(scannedCode.data)
+                                                    : Database.getGoodsRow(scannedCode.data);
                                             if (currentGoods == null) {
                                                 MainActivity.say(getResources().getString(R.string.wrong_goods));
                                                 FL.d(TAG, "Wrong goods code " + scannedCode.data);
@@ -342,7 +355,8 @@ public class MainFragment extends Fragment {
                                             }
                                         }
                                     } else {
-                                        currentGoods = Database.getGoodsRow(scannedCode.data);
+                                        currentGoods = App.getPackMode()? Database.getPackRow(scannedCode.data)
+                                                : Database.getGoodsRow(scannedCode.data);
                                         if (currentGoods == null) {
                                             MainActivity.say(getResources().getString(R.string.wrong_goods));
                                             FL.d(TAG, "Wrong goods code " + scannedCode.data);

@@ -39,7 +39,29 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="8"
+        android:layout_weight="1"
+        android:weightSum="2"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_weight="1"
+            android:id="@+id/tv_camera"
+            android:textSize="20sp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/camera" />
+        <EditText
+            android:layout_weight="1"
+            android:id="@+id/et_camera"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ems="6"
+            android:inputType="number"
+            android:textSize="24sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="6"
         android:orientation="vertical" />
     <!--
     <Button

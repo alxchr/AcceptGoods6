@@ -2,10 +2,9 @@ package ru.abch.acceptgoods6;
 
 public class GoodsPosition {
     String barcode, description, cell, id, article, time, store, dctNum;
-    int qnt, total;
+    public int qnt, total, overflow;
     long rowId;
-    public boolean excessive;
-    public String cellId, mdoc;
+    public String cellId, mdoc, pallet, ipcam, storemanId;
     GoodsPosition(String id, String barcode, String description, String cell, int qnt, String article, int total){
         this.barcode = barcode;
         this.description = description;

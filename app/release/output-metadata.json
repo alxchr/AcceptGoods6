@@ -4,15 +4,15 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "ru.abch.acceptgoods6",
+  "applicationId": "ru.abch.universalacceptgoods",
   "variantName": "release",
   "elements": [
     {
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 21,
-      "versionName": "6.21",
+      "versionCode": 6,
+      "versionName": "1.0.6",
       "outputFile": "app-release.apk"
     }
   ],

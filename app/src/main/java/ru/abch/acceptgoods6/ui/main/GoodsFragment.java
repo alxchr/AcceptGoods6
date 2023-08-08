@@ -39,7 +39,7 @@ public class GoodsFragment extends Fragment {
         gf.goodsRow = gr;
         gf.qnt = qnt;
         gf.total = gr.qnt;
-        FL.d(TAG,"Goods " + gr.article + " total " + gr.qnt + " qnt " + qnt);
+        Log.d(TAG,"Goods " + gr.id + " " + gr.article + " total " + gr.qnt + " qnt " + qnt);
         Database.getPackRowById(gr.id);
         return gf;
     }
@@ -53,6 +53,7 @@ public class GoodsFragment extends Fragment {
     boolean cellSet = false, lostGoodsInput = false;
     ProgressBar pbWait;
     LoadGoodsTask loadGoodsTask;
+    AlertDialog.Builder adbConfirmExcessive;
 //    String input;
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -105,11 +106,10 @@ public class GoodsFragment extends Fragment {
                                 etQnt.requestFocus();
                             });
                             adbConfirmLost.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
-                                Log.d(TAG, "Confirm lost goods ");
-                                FL.d(TAG, "Add lost goods " + goodsRow.article + " qnt " + qnt);
+                                FL.d(TAG, "Add lost goods " + goodsRow.article + " qnt " + qnt + " pack mode " + App.getPackMode());
                                 if(App.getPackMode()) {
-                                    placePackGoods(App.getStoreMan(), goodsRow.id, "",
-                                            qnt, cellIn.id, MainActivity.getCurrentTime());
+                                    placeLostGoods(App.getStoreMan(), goodsRow.id, "",
+                                            qnt, MainActivity.getCurrentTime());
                                 } else {
                                     Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
                                             qnt, cellIn.id, MainActivity.getCurrentTime());
@@ -119,12 +119,31 @@ public class GoodsFragment extends Fragment {
                             });
                             adbConfirmLost.create().show();
                         } else {
-                            MainActivity.say(getResources().getString(R.string.wrong_qnt));
-                            etCell.setText("");
-                            lostGoodsInput = false;
-                            etQnt.setText("");
-                            etQnt.setEnabled(true);
-                            etQnt.requestFocus();
+                            if(App.getPackMode()) {
+                                adbConfirmExcessive = new AlertDialog.Builder(requireActivity());
+                                adbConfirmExcessive.setTitle(R.string.excessive_goods_confirm);
+                                String msg = getResources().getString(R.string.excessive_goods) + " " + (qnt - total);
+                                adbConfirmExcessive.setMessage(msg);
+                                adbConfirmExcessive.setNegativeButton(R.string.no, (dialogInterface, i) -> {
+//                                    lostGoodsInput = false;
+                                    etQnt.setText("");
+                                    etQnt.requestFocus();
+                                });
+                                adbConfirmExcessive.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
+                                    FL.d(TAG, "Add excessive goods " + goodsRow.article + " qnt " + qnt);
+                                    placePackGoods(App.getStoreMan(), goodsRow.id, "",
+                                                qnt, cellIn.id, MainActivity.getCurrentTime());
+                                    loadGoodsData();
+                                });
+                                adbConfirmExcessive.create().show();
+                            } else {
+                                MainActivity.say(getResources().getString(R.string.wrong_qnt));
+                                etCell.setText("");
+                                lostGoodsInput = false;
+                                etQnt.setText("");
+                                etQnt.setEnabled(true);
+                                etQnt.requestFocus();
+                            }
                         }
                     } else {
                         etCell.setText("");
@@ -188,6 +207,7 @@ public class GoodsFragment extends Fragment {
                                         if(App.getPackMode()) {
                                             placePackGoods(App.getStoreMan(), goodsRow.id, "",
                                                     qnt, cellIn.id, MainActivity.getCurrentTime());
+
                                         } else {
                                             Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
                                                     qnt, cellIn.id, MainActivity.getCurrentTime());
@@ -196,11 +216,30 @@ public class GoodsFragment extends Fragment {
                                         loadGoodsData();
                                         App.currentDistance = cellIn.distance;
                                     } else {
-                                        MainActivity.say(getResources().getString(R.string.wrong_qnt));
-                                        etCell.setText("");
-                                        etQnt.setText("");
-                                        etQnt.setEnabled(true);
-                                        etQnt.requestFocus();
+                                        if(App.getPackMode()) {
+                                            adbConfirmExcessive = new AlertDialog.Builder(requireActivity());
+                                            adbConfirmExcessive.setTitle(R.string.excessive_goods_confirm);
+                                            String msg = getResources().getString(R.string.excessive_goods) + " " + (qnt - total);
+                                            adbConfirmExcessive.setMessage(msg);
+                                            adbConfirmExcessive.setNegativeButton(R.string.no, (dialogInterface, i) -> {
+//                                    lostGoodsInput = false;
+                                                etQnt.setText("");
+                                                etQnt.requestFocus();
+                                            });
+                                            adbConfirmExcessive.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
+                                                FL.d(TAG, "Add excessive goods " + goodsRow.article + " qnt " + qnt);
+                                                placePackGoods(App.getStoreMan(), goodsRow.id, "",
+                                                        qnt, cellIn.id, MainActivity.getCurrentTime());
+                                                loadGoodsData();
+                                            });
+                                            adbConfirmExcessive.create().show();
+                                        } else {
+                                            MainActivity.say(getResources().getString(R.string.wrong_qnt));
+                                            etCell.setText("");
+                                            etQnt.setText("");
+                                            etQnt.setEnabled(true);
+                                            etQnt.requestFocus();
+                                        }
                                     }
                                 } else {
                                     AlertDialog.Builder adbConfirmCell = new AlertDialog.Builder(requireActivity());
@@ -265,7 +304,8 @@ public class GoodsFragment extends Fragment {
     }
 
     private void addScannedGoods(String barcode) {
-        GoodsRow scannedGoods = Database.getGoodsRow(barcode);
+        GoodsRow scannedGoods = App.getPackMode()? Database.getPackRow(barcode)
+        : Database.getGoodsRow(barcode);
         if (scannedGoods != null) {
             if (scannedGoods.id.equals(goodsRow.id)) {
                 int unitQnt = Database.getBarcodeQnt(barcode);
@@ -300,16 +340,32 @@ public class GoodsFragment extends Fragment {
         }
         if (qnt > 0 && qnt <= total) {
             FL.d(TAG, "Add lost goods " + goodsRow.article + " qnt " + qnt);
-            if(App.getPackMode()) {
-                placePackGoods(App.getStoreMan(), goodsRow.id, "",
-                        qnt, cellIn.id, MainActivity.getCurrentTime());
-            } else {
-                Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",
-                        qnt, cellIn.id, MainActivity.getCurrentTime());
-            }
-//            ((MainActivity) requireActivity()).uploadGoods();
+            Database.addPlacedGoods(App.getStoreMan(), goodsRow.id, "",qnt, cellIn.id, MainActivity.getCurrentTime());
             loadGoodsData();
             App.currentDistance = cellIn.distance;
+        } else {
+            MainActivity.say(getResources().getString(R.string.wrong_qnt));
+            etCell.setText("");
+            etQnt.setText("");
+            etQnt.setEnabled(true);
+            etQnt.requestFocus();
+        }
+    }
+    public void processLost() {
+//        etCell.setText(lostGoodsCell.descr);
+//        cellIn = lostGoodsCell;
+        lostGoodsInput = true;
+        String sQnt = etQnt.getText().toString();
+        if (sQnt.length() > 0) {
+            qnt = Integer.parseInt(sQnt);
+        } else {
+            qnt = 0;
+        }
+        if (qnt > 0 && qnt <= total) {
+            FL.d(TAG, "Add lost goods " + goodsRow.article + " qnt " + qnt);
+            placeLostGoods(App.getStoreMan(), goodsRow.id, "", qnt, MainActivity.getCurrentTime());
+            loadGoodsData();
+//            App.currentDistance = cellIn.distance;
         } else {
             MainActivity.say(getResources().getString(R.string.wrong_qnt));
             etCell.setText("");
@@ -524,18 +580,39 @@ public class GoodsFragment extends Fragment {
     }
     private void placePackGoods(int storeman, String goodsId, String barcode, int qnt, String cell, String datetime) {
         int rows = goodsRow.packDetails.length;
-        int inputQnt = qnt;
-        for (int i = 0; i < rows; i++) {
+        int inputQnt = qnt, i;
+        Log.d(TAG, "placePackGoods() id " + goodsId + " inputQnt " + inputQnt + " rows " + rows);
+        for (i = 0; i < rows; i++) {
             int rowQnt = Math.min(goodsRow.packDetails[i].packQnt, goodsRow.packDetails[i].qnt);
             int q = Math.min(inputQnt, rowQnt);
-            Database.addPackGoods(storeman, goodsId, barcode, q, cell, datetime, goodsRow.packDetails[i].mdoc);
+            Log.d(TAG, "placePackGoods() id " + goodsId + " inputQnt " + inputQnt + " rowQnt " + rowQnt + " placed " + q + " step " + i);
+            if (q > 0) {
+                Database.addPackGoods(storeman, goodsId, barcode, q, cell, datetime, goodsRow.packDetails[i].mdoc, 0);
+            }
             if(inputQnt > rowQnt) {
                 inputQnt -= q;
             } else {
                 break;
             }
         }
-
+        if(inputQnt > 0 && i == rows) {  //excessive goods
+            Database.addPackGoods(storeman, goodsId, barcode, inputQnt, cell, datetime, goodsRow.packDetails[i-1].mdoc, 1);
+        }
+    }
+    private void placeLostGoods(int storeman, String goodsId, String barcode, int qnt,  String datetime) {
+        int rows = goodsRow.packDetails.length;
+        int inputQnt = qnt;
+        for (int i = 0; i < rows; i++) {
+            int rowQnt = Math.min(goodsRow.packDetails[i].packQnt, goodsRow.packDetails[i].qnt);
+            int q = Math.min(inputQnt, rowQnt);
+            FL.d(TAG, "placeLostGoods() id " + goodsId + " inputQnt " + inputQnt + " rowQnt " + rowQnt + " lost " + q);
+            Database.addLostGoods(storeman, goodsId, barcode, q, "", datetime, goodsRow.packDetails[i].mdoc);
+            if(inputQnt > rowQnt) {
+                inputQnt -= q;
+            } else {
+                break;
+            }
+        }
     }
     private void placeExcessivePackGoods(int storeman, String goodsId, String barcode, int qnt, String cell, String datetime,String lostGoodsCellId) {
 

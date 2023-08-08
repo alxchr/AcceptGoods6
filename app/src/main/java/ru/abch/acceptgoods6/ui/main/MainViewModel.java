@@ -80,7 +80,7 @@ public class MainViewModel extends ViewModel {
             return ret;
         });
         Log.d(TAG, "Task list size " + taskList.size());
-        goodsData.postValue(taskList);
+        if(goodsData != null) goodsData.postValue(taskList);
     }
 
     public LiveData<GoodsRow> getCurrentGoods() {

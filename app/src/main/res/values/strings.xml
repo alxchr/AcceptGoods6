@@ -49,4 +49,10 @@
     <string name="clear">Clear</string>
     <string name="upload">Upload data</string>
     <string name="clear_msg">Clear all data</string>
+    <string name="empty_pack_tts">Pack is empty</string>
+    <string name="camera">Camera</string>
+    <string name="enter_camera_tts">Enter or scan camera</string>
+    <string name="ok" translatable="false">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="photo">"+ Photo"</string>
 </resources>

@@ -23,6 +23,9 @@ public class Config {
     public static final String postExcessivePath = "/move3/goods/";
     public static final String warehousesPath = "/move3/warehouses2/";
     public static final String packPath = "/accept5/pack/";
+    public static final String storemanPath = "/accept5/storeman/";
+    public static final String cameraPath = "/accept5/camera/";
+    public static final String packBarcodesPath = "/accept5/packbarcodes/";
     public static final long timeShift = 946666800000L;
     public static final boolean tts = true;
     public static long toComttTime(long t) {
